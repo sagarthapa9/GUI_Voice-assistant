@@ -9,14 +9,56 @@ import valib
 import response
 import glob
 import logging
+import pygame
 
+
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using :0.0')
+    os.environ.__setitem__('DISPLAY', ':0.0')
 
 r = sr.Recognizer()
+pygame.init()
+
+SCREEN_HEIGHT =320
+SCREEN_WIDTH = 400
+
+black = (0,0,0)
+alpha = (0,88,255)
+white = (255,255,255)
+red = (200,0,0)
+green = (0,200,0)
+bright_red = (255,0,0)
+bright_green = (0,255,0)
+blue = (16,166,240)
+
+gameDisplay = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pygame.FULLSCREEN)
+pygame.display.set_caption('GUI Speech Recognition')
+clock= pygame.time.Clock()
+gameDisplay.fill(white)
+pygame.font.init()
+
+def close():
+    pygame.quit()
+    quit()
+
+def message_display(text, color, count):
+    test_font = pygame.font.Font('freesansbold.ttf',32)
+    text_surf = test_font.render(text, True, color)
+    screen_Height = 100
+    text_rec = text_surf.get_rect(center=(SCREEN_WIDTH/2, screen_Height + (count * 40)))
+    gameDisplay.blit(text_surf, text_rec)
+
+
+
+def text_objects(text, font):
+    textSurface = font.render(text, True, alpha)
+    return textSurface, textSurface.get_rect()
+    
 
 RESPEAKER_RATE = 44100                  # Sample rate of the mic.
 RESPEAKER_CHANNELS = 1                  # Number of channel of the input device.
 RESPEAKER_WIDTH = 2
-RESPEAKER_INDEX = 0                     # run the check_device_id.py to get the mic index.
+RESPEAKER_INDEX = 2                     # run the check_device_id.py to get the mic index.
 CHUNK = 1024                            # Number of frames per buffer.
 WAVE_OUTPUT_FILEPATH = "/mnt/ramdisk/"  # Directory location ocation of all the output files.
 recognized_text = ''                    # Global variable for storing  audio converted text
@@ -87,11 +129,10 @@ class voice:
             os.remove(filename)
             return recognized_text
 
-
-px = Pixels()  # Initializing the Pixel class for RE-SPEAKER PiHAT LED.
-px.wakeup()
-time.sleep(2)
-px.off()
+# px = Pixels()  # Initializing the Pixel class for RE-SPEAKER PiHAT LED.
+# px.wakeup()
+# time.sleep(2)
+# px.off()
 
 a = voice()    # Initializing the voice class.
 
@@ -111,7 +152,7 @@ Infinite loop:
         f. turn off the LED.
 """
 if __name__ == '__main__':
-
+    count = 0
     logger = logging.getLogger('voice assistant')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler("/mnt/ramdisk/voice.log")
@@ -121,28 +162,53 @@ if __name__ == '__main__':
     logger.addHandler(fh)
 
     while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
         file_name = a.process(3)
         logger.info("wake_word said :: " + recognized_text)
-        #print("wake_word said :: " + recognized_text)
-        if "Gideon" in recognized_text:
+        print("wake_word said :: " + recognized_text)
+
+        if "Google" in recognized_text:
             logger.info("wake word detected...")
             recognized_text = ''
-            px.wakeup()
-            valib.audio_playback('how can i help you')
+            gameDisplay.fill(white)
+            #px.wakeup()
+            #valib.audio_acknowlegded_playback()
+            valib.audio_playback('hello')
             time.sleep(0.5)
             command_file_name = a.process(5)
             a.voice_command_processor(command_file_name)
             logger.info("you said :: " + recognized_text)
-            px.think()
+            print("you said :: " + recognized_text)
+
+            if recognized_text != '':
+               count += 1
+               message_display(recognized_text, green, count)
+               pygame.display.update()
+            #px.think()
             status = response.process_text(recognized_text, a)
-            while status != 'done':
+            print(status)
+            while status == '':
                 pass
 
+            if status != '':
+                count +=1
+                message_display(status, blue, count )
+                pygame.display.update()
+            count = 0
             files = glob.glob(os.path.join(WAVE_OUTPUT_FILEPATH + '*.wav'))
             for file in files:
                 os.remove(file)
             recognized_text = ''
-            px.off()
+            #px.off()
         else:
             t1 = threading.Thread(target=a.voice_command_processor, args=(file_name,))
             t1.start()
+
+        pygame.display.update()
+        clock.tick(60)
+
+

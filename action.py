@@ -72,6 +72,7 @@ def google_search(search_text):
         except Exception as e:
             pass 
     logger.info("google_search : Search Result ::"+result)
+    print("google_search : Search Result ::"+result)
     return result
 
 

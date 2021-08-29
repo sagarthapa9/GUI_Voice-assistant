@@ -9,14 +9,17 @@ import logging
 
 logger = logging.getLogger('voice assistant')
 
+reply ="Please speak again"
 
 def process_text(text, pa):
-
+    
     """
     asking who are you?
     """
     if "who are you" in text:
-        va.audio_playback("i am a i voice assistant system")
+        reply = "i am a i voice assistant system"
+        va.audio_playback(reply)
+        return reply
 
     """
     asking about weather information.
@@ -64,21 +67,28 @@ def process_text(text, pa):
     """
     if "time" in text or "Time" in text:
         current_time = a.current_datetime("time")
+        reply = current_time
         va.audio_playback("right now it is " + current_time)
-
+        return reply
     """
     asking about today's date.
     """
     if "date" in text or "Date" in text:
         date = a.current_datetime("date")
+        reply = date
         va.audio_playback("today it is " + date)
+     
+        return reply
 
         
     """
     asking for rebooting the voice assistant system.
     """
     if "reboot" in text or "Reboot" in text:
-        va.audio_playback("ok.. rebooting the server")
+        reply= "ok.. rebooting the server"
+        va.audio_playback(reply)
         a.reboot_server()
+        return reply
 
-    return "done"
+    else:
+         reply = "Speak Again"
